@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1f3d2b;
+    --board-dark: #17301f;
+    --chalk: #f0ede4;
+    --chalk-dim: #cdd0c2;
+    --chalk-yellow: #e8c468;
+    --pen-red: #c1443c;
+    --pen-green: #6b9e78;
+    --frame: #4a3626;
+    --frame-light: #6b4f37;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--frame);
+    background-image:
+      linear-gradient(90deg, rgba(0,0,0,0.15) 0px, transparent 3px),
+      linear-gradient(var(--frame-light), var(--frame));
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--chalk);
+    display: flex;
+    justify-content: center;
+    padding: 36px 16px 64px;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 920px;
+    background: var(--board);
+    border: 14px solid var(--frame-light);
+    border-radius: 4px;
+    box-shadow:
+      inset 0 0 60px rgba(0,0,0,0.45),
+      0 20px 40px rgba(0,0,0,0.4);
+    padding: 40px 36px 48px;
+    position: relative;
+  }
+
+  /* subtle chalk dust texture */
+  .board::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+    border-radius: 4px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+    margin: 0 0 6px;
+  }
+
+  h1 {
+    font-family: 'Kalam', cursive;
+    font-weight: 700;
+    font-size: 44px;
+    margin: 0;
+    color: var(--chalk);
+    text-shadow: 0 0 14px rgba(240,237,228,0.15);
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--chalk-dim);
+    margin-top: 8px;
+  }
+
+  .chalk-rule {
+    border: none;
+    border-top: 2px dashed rgba(240,237,228,0.25);
+    margin: 28px 0;
+  }
+
+  /* Add student card - looks like a taped index card */
+  .card {
+    background: #f5f0dd;
+    color: #2a2a1f;
+    padding: 20px 22px;
+    border-radius: 2px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+    transform: rotate(-0.6deg);
+    margin-bottom: 32px;
+    position: relative;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(3deg);
+    width: 70px;
+    height: 22px;
+    background: rgba(232,196,104,0.55);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .card h2 {
+    font-family: 'Kalam', cursive;
+    font-size: 20px;
+    margin: 0 0 14px;
+    color: #2a2a1f;
+  }
+
+  .card-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .field {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .field label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #5a5540;
+  }
+
+  .field input {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    padding: 9px 10px;
+    border: 1px solid #b9b191;
+    border-radius: 2px;
+    background: #fffdf6;
+    color: #2a2a1f;
+  }
+
+  .field input:focus {
+    outline: 2px solid var(--pen-green);
+    outline-offset: 1px;
+  }
+
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 2px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-chalk {
+    align-self: flex-end;
+    background: var(--pen-green);
+    color: #10231a;
+  }
+
+  /* Roll / ledger table */
+  .ledger-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+
+  .ledger-head h2 {
+    font-family: 'Kalam', cursive;
+    font-size: 22px;
+    margin: 0;
+  }
+
+  .count-tag {
+    font-size: 12px;
+    color: var(--chalk-dim);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  thead th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--chalk-dim);
+    color: var(--chalk-yellow);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  tbody tr {
+    border-bottom: 1px dashed rgba(240,237,228,0.18);
+  }
+
+  tbody td {
+    padding: 10px;
+    vertical-align: middle;
+  }
+
+  .id-cell { color: var(--chalk-dim); width: 60px; }
+  .name-cell { font-weight: 500; }
+
+  .att-count {
+    display: inline-block;
+    min-width: 26px;
+    text-align: center;
+    padding: 2px 8px;
+    border: 1px solid var(--chalk-dim);
+    border-radius: 20px;
+    font-size: 12px;
+  }
+
+  .mark-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .stamp {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .stamp.present { border-color: var(--pen-green); color: var(--pen-green); }
+  .stamp.absent { border-color: var(--pen-red); color: var(--pen-red); }
+
+  .stamp svg { width: 16px; height: 16px; }
+
+  .stamp path {
+    stroke-dasharray: 40;
+    stroke-dashoffset: 40;
+  }
+  .stamp.marked path {
+    animation: draw 0.35s ease forwards;
+  }
+  @keyframes draw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .row-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .edit-att {
+    width: 46px;
+    font-family: 'IBM Plex Mono', monospace;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--chalk-dim);
+    color: var(--chalk);
+    font-size: 13px;
+    text-align: center;
+    padding: 2px 0;
+  }
+  .edit-att:focus { outline: none; border-color: var(--chalk-yellow); }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--chalk-dim);
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .delete-btn:hover { color: var(--pen-red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 36px 0;
+    color: var(--chalk-dim);
+    font-family: 'Kalam', cursive;
+    font-size: 18px;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 11px;
+    color: var(--chalk-dim);
+    letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 32px; }
+    .board { padding: 28px 18px 36px; }
+    table { font-size: 12px; }
+    thead th:nth-child(3), tbody td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <header>
+    <p class="eyebrow">BSCS &middot; Roll No. Register</p>
+    <h1>Attendance Register</h1>
+    <p class="subtitle">Mark it, track it, keep the roll honest.</p>
+  </header>
+
+  <div class="card">
+    <h2>+ New entry</h2>
+    <div class="card-row">
+      <div class="field">
+        <label for="sid">Student ID</label>
+        <input type="number" id="sid" placeholder="e.g. 24101">
+      </div>
+      <div class="field" style="flex:2;">
+        <label for="sname">Full name</label>
+        <input type="text" id="sname" placeholder="e.g. Ayesha Khan">
+      </div>
+      <button class="btn btn-chalk" onclick="addStudent()">Add to register</button>
+    </div>
+  </div>
+
+  <hr class="chalk-rule">
+
+  <div class="ledger-head">
+    <h2>Today's roll</h2>
+    <span class="count-tag" id="countTag">0 students</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Present</th>
+        <th>Mark</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="rollBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState">The register is empty. Add your first student above.</div>
+
+  <footer>Stored locally in this browser &mdash; each device keeps its own register.</footer>
+</div>
+
+<script>
+  const STORAGE_KEY = 'attendance-register-v1';
+  let students = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
+    render();
+  }
+
+  function addStudent() {
+    const idInput = document.getElementById('sid');
+    const nameInput = document.getElementById('sname');
+    const id = idInput.value.trim();
+    const name = nameInput.value.trim();
+
+    if (!id || !name) {
+      alert('Enter both a student ID and a name.');
+      return;
+    }
+    if (students.some(s => String(s.id) === id)) {
+      alert('That ID is already in the register.');
+      return;
+    }
+
+    students.push({ id, name, attendance: 0 });
+    idInput.value = '';
+    nameInput.value = '';
+    idInput.focus();
+    save();
+  }
+
+  function mark(id, present) {
+    const s = students.find(s => String(s.id) === String(id));
+    if (!s) return;
+    if (present) s.attendance++;
+    save();
+    // trigger the chalk-draw animation on the clicked stamp
+    requestAnimationFrame(() => {
+      const btn = document.querySelector(`.stamp[data-id="${id}"][data-type="${present ? 'present' : 'absent'}"]`);
+      if (btn) {
+        btn.classList.remove('marked');
+        void btn.offsetWidth;
+        btn.classList.add('marked');
+      }
+    });
+  }
+
+  function updateAttendance(id, value) {
+    const s = students.find(s => String(s.id) === String(id));
+    if (!s) return;
+    const n = parseInt(value, 10);
+    s.attendance = isNaN(n) ? 0 : n;
+    save();
+  }
+
+  function removeStudent(id) {
+    if (!confirm('Remove this student from the register?')) return;
+    students = students.filter(s => String(s.id) !== String(id));
+    save();
+  }
+
+  function render() {
+    const tbody = document.getElementById('rollBody');
+    const empty = document.getElementById('emptyState');
+    const countTag = document.getElementById('countTag');
+
+    countTag.textContent = `${students.length} student${students.length === 1 ? '' : 's'}`;
+
+    if (students.length === 0) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = students.map(s => `
+      <tr>
+        <td class="id-cell">${s.id}</td>
+        <td class="name-cell">${escapeHtml(s.name)}</td>
+        <td><span class="att-count">${s.attendance}</span></td>
+        <td>
+          <div class="mark-btns">
+            <button class="stamp present" data-id="${s.id}" data-type="present" title="Mark present" onclick="mark('${s.id}', true)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 12l5 5L20 6"/></svg>
+            </button>
+            <button class="stamp absent" data-id="${s.id}" data-type="absent" title="Mark absent" onclick="mark('${s.id}', false)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+        </td>
+        <td>
+          <div class="row-actions">
+            <input class="edit-att" type="number" value="${s.attendance}" onchange="updateAttendance('${s.id}', this.value)" title="Edit attendance directly">
+            <button class="delete-btn" onclick="removeStudent('${s.id}')">remove</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  render();
+</script>
+
+</body>
+</html>
