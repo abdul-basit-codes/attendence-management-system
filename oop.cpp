@@ -1,5 +1,7 @@
 #include <iostream>
+#ifdef _WIN32
 #include <conio.h>
+#endif
 #include <string>
 using namespace std;
 
@@ -149,6 +151,8 @@ int main() {
         }
     } while (choice != 5);
 
+#ifdef _WIN32
     _getch();
+#endif
     return 0;
 }
